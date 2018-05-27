@@ -12,7 +12,7 @@ class MyReads extends Component {
   state = {
     books : [],
     query: '',
-    searchedBooks: [] 
+    searchedBooks: []
   }
 
   componentDidMount() {
@@ -22,60 +22,83 @@ class MyReads extends Component {
         return {
           id: book.id,
           title: book.title,
-          author: book.authors,
+          author: (book.authors) ? book.authors : "No author",
           shelf: book.shelf,
-          imageUrl: book.imageLinks.smallThumbnail
+          imageUrl: (book.imageLinks) ? book.imageLinks.smallThumbnail : "No thumbnail"
         }
       });
       this.setState({books: allBooks});
     })
   }
-  
+
   updateQuery = (query) => {
 
     this.setState({query: query})
-
+    query ?
     BooksAPI.search(query.trim(), 20).then((bookList) => {
 
       if(Array.isArray(bookList)) {
-        
+
         let allBooks = bookList.map(function(book) {
           if(book.imageLinks) {
             return {
               id: book.id,
               title: book.title,
-              author: book.authors,
+              author: (book.authors) ? book.authors : "No author",
               shelf: book.shelf,
-              imageUrl: book.imageLinks.smallThumbnail
+              imageUrl: (book.imageLinks) ? book.imageLinks.smallThumbnail : "No thumbnail"
             }
           } else {
               return {
                 id: book.id,
                 title: book.title,
-                author: book.authors,
+                author: (book.authors) ? book.authors : "No author",
                 shelf: book.shelf,
                 imageUrl: ''
               }
-          }  
+          }
         })
         this.setState({searchedBooks: allBooks})
-      } 
-    })
+      }
+    }) : ""
   }
 
   handleControl = (changedBook, newShelf) => {
-    
+
+    let allBooks = {}
+
+    allBooks = this.state.books.map(function(book) {
+          if(book.id === changedBook.id){
+            return {
+              id: changedBook.id,
+              title: changedBook.title,
+              author: changedBook.author,
+              shelf: newShelf,
+              imageUrl: changedBook.imageUrl
+            }
+        } else {
+            return {
+              id: book.id,
+              title: book.title,
+              author: (book.authors) ? book.authors : "No author",
+              shelf: book.shelf,
+              imageUrl: (book.imageLinks) ? book.imageLinks.smallThumbnail : "No thumbnail"
+            }
+          }
+        })
+    this.setState({books: allBooks})
+
     BooksAPI.update(changedBook, newShelf).then((updatedBookShelves) => {
-      
+
       BooksAPI.getAll().then(bookList => {
-        let allBooks = bookList.map(function(book) {
+        allBooks = bookList.map(function(book) {
           if(book.id === changedBook.id){
             return {
               id: book.id,
               title: book.title,
               author: book.authors,
               shelf: newShelf,
-              imageUrl: book.imageLinks.smallThumbnail
+              imageUrl: (book.imageLinks) ? book.imageLinks.smallThumbnail : "No thumbnail"
             }
         } else {
             return {
@@ -83,20 +106,35 @@ class MyReads extends Component {
               title: book.title,
               author: book.authors,
               shelf: book.shelf,
-              imageUrl: book.imageLinks.smallThumbnail
+              imageUrl: (book.imageLinks) ? book.imageLinks.smallThumbnail : "No thumbnail"
             }
           }
         })
         this.setState({books: allBooks})
       })
-    })     
+
+      BooksAPI.getAll().then((bookList) => {
+
+        let allTheBooks = bookList.map(function(book) {
+          return {
+            id: book.id,
+            title: book.title,
+            author: (book.authors) ? book.authors : "No author",
+            shelf: book.shelf,
+            imageUrl: (book.imageLinks) ? book.imageLinks.smallThumbnail : "No thumbnail"
+          }
+        });
+        this.setState({books: allTheBooks});
+      })
+
+    })
   }
 
   render() {
     let shelves = [
       {
-        id: 'currentlyReading', 
-        title: 'Currently Reading', 
+        id: 'currentlyReading',
+        title: 'Currently Reading',
         books: this.state.books.filter((book) => book.shelf === 'currentlyReading')
       },
       {
@@ -110,7 +148,7 @@ class MyReads extends Component {
         books: this.state.books.filter(book => book.shelf === 'read')
       }
     ]
-    
+
     let showingBooks
     if(this.state.query) {
       const match = new RegExp(escapeRegExp(this.state.query), 'i');
@@ -146,11 +184,11 @@ class MyReads extends Component {
             <div className="search-books-results">
               <ol className="books-grid">
               {showingBooks.map(searchedBook => (
-                <SearchList shelfBooks={this.state.books} searchedBook={searchedBook} control={this.handleControl}/>
+                <SearchList shelfBooks={this.state.books} searchedBook={searchedBook} control={this.handleControl} key={searchedBook.id}/>
                 ))}
               </ol>
             </div>
-            
+
           </div>
         )}></Route>
       </div>
